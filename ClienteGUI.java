@@ -8,7 +8,7 @@ import java.util.StringTokenizer;
 public class ClienteGUI extends JFrame implements ActionListener
 {
 	private JTextField tfNocuenta, tfNombre, tfTipo, tfSaldo;
-	private JButton bCapturar, bConsultar, bConsultarTipo, bConsultarNocta, bBorrarCliente, bCancelar, bRetiro, bDeposito, bArchivoTexto, bDatosArchivo, bArchivoABase, bSalir;
+	private JButton bCapturar, bConsultar, bConsultarTipo, bConsultarNocta, bBorrarCliente, bCancelar, bRetiro, bDeposito, bTransferencia, bArchivoTexto, bDatosArchivo, bArchivoABase, bSalir;
 	private JTextArea taDatos;
 	private JPanel panel1, panel2;
 	
@@ -36,6 +36,7 @@ public class ClienteGUI extends JFrame implements ActionListener
 		bCancelar = new JButton("Cancelar Transacci—n");
 		bRetiro = new JButton("Retirar de Una Cuenta");
 		bDeposito = new JButton("Depositar a Una Cuenta");
+		bTransferencia = new JButton("Transferir a otra Cuenta");
 		bDatosArchivo = new JButton("Pasar datos al archivo de texto");
 		bArchivoTexto = new JButton("Desplegar archivo texto");
 		bArchivoABase = new JButton("Pasar datos del Archivo a la BD");
@@ -50,6 +51,7 @@ public class ClienteGUI extends JFrame implements ActionListener
 		bCancelar.addActionListener(this);
 		bRetiro.addActionListener(this);
 		bDeposito.addActionListener(this);
+		bTransferencia.addActionListener(this);
 		bDatosArchivo.addActionListener(this);
 		bArchivoTexto.addActionListener(this);
 		bArchivoABase.addActionListener(this);
@@ -58,12 +60,12 @@ public class ClienteGUI extends JFrame implements ActionListener
 		combo = new JComboBox(opciones);
 		combo.addActionListener(this);
 		
-		taDatos    = new JTextArea(10,30);
+		taDatos    = new JTextArea(11,30);
 		panel1     = new JPanel();
 		panel2     = new JPanel();
 		
 		// 2. Adicionar los objetos al panel1
-		panel1.setLayout(new GridLayout(11,2));
+		panel1.setLayout(new GridLayout(12,2));
 		panel2.setLayout(new FlowLayout());
 		
 		panel1.add(new JLabel("NO. DE CUENTA"));
@@ -88,6 +90,7 @@ public class ClienteGUI extends JFrame implements ActionListener
 		panel1.add(bConsultarNocta);
 		panel1.add(bRetiro);
 		panel1.add(bDeposito);
+		panel1.add(bTransferencia);
 		panel1.add(bBorrarCliente);
 		panel1.add(bCancelar);
 		panel1.add(bArchivoTexto);
@@ -107,6 +110,9 @@ public class ClienteGUI extends JFrame implements ActionListener
 		bCancelar.setEnabled(false);
 		bDeposito.setEnabled(false);
 		bRetiro.setEnabled(false);
+		bTransferencia.setEnabled(false);
+
+		
 		
 	}
 	
@@ -156,6 +162,7 @@ public class ClienteGUI extends JFrame implements ActionListener
 		bCancelar.setEnabled(true);
 		bRetiro.setEnabled(true);
 		bDeposito.setEnabled(true);
+		bTransferencia.setEnabled(true);
 	}
 	
 	private void activarBotones(){
@@ -167,6 +174,7 @@ public class ClienteGUI extends JFrame implements ActionListener
 		bCancelar.setEnabled(false);
 		bRetiro.setEnabled(false);
 		bDeposito.setEnabled(false);
+		bTransferencia.setEnabled(false);
 	}
 	
 	public void actionPerformed(ActionEvent e)
@@ -280,6 +288,18 @@ public class ClienteGUI extends JFrame implements ActionListener
 			String respuesta = "";
 			int cantidad = Integer.parseInt(ctd);
 			respuesta = banco.retiro(cta, cantidad);
+			taDatos.setText(respuesta);
+			activarBotones();
+		}
+		
+		if(e.getSource() == bTransferir)
+		{
+			String cta = tfNocuenta.getText();
+			String cta2 = JOptionPane.showInputDialog("Cuenta a la que desea Transferir: ");
+			String ctd = JOptionPane.showInputDialog("Cantidad a Transferir: ");
+			String respuesta = "";
+			int cantidad = Integer.parseInt(ctd);
+			respuesta = banco.transferencia(cta, cantidad, cta2);
 			taDatos.setText(respuesta);
 			activarBotones();
 		}

@@ -341,6 +341,64 @@ public class BancoADjdbc{
         
         return res;
 	}
+	
+	//Transferencia
+	public String transferencia(String cuentaOrigen, int cantidad, String cuentaDestino) {
+    	ResultSet result;
+        String updateSQL = "";
+        int saldo = 0;
+        String res = "";
+        String query = "";
+        
+        Boolean hipo = false;
+        
+        query = "SELECT * FROM Cliente WHERE nocta = '" + cuenta.toString() + "'";
+        
+        try{
+            
+            //1) Abrir la base de datos Banco
+            statement = conexion.createStatement();
+            
+            //2) Procesar datos de la tabla resultante
+            result = statement.executeQuery(query);
+            
+            if(result.next()){
+                clientedp.setSaldo(result.getInt("saldo"));
+                clientedp.setTipo(result.getString("cuenta"));
+                
+                saldo = clientedp.getSaldo();
+            }
+            
+            if (clientedp.getTipo().equals("AHORRO") || clientedp.getTipo().equals("INVERSION"))
+            	 saldo -= cantidad;
+            
+			if (clientedp.getTipo().equals("CREDITO"))
+				 saldo += cantidad;
+			
+			if (clientedp.getTipo().equals("HIPOTECA"))
+				 hipo = true;
+            
+            updateSQL = "UPDATE Cliente SET saldo = " + saldo + " WHERE nocta = '" + cuenta.toString() + "'";
+            
+            //3) Ejecutar UPDATE Statement
+            statement.executeUpdate(updateSQL);
+            
+            if (!hipo)
+            	res = "Retiro Exit—so";
+            else
+            	res = "Para una cuenta de 'HIPOTECA' no se puede realizar un retiro";
+            
+            //3) Cerra la base de datos banco
+            statement.close();
+            System.out.println(conexion.nativeSQL(updateSQL));
+        }
+        catch(SQLException sqle){
+            System.out.println("Error: \n" + sqle);
+            res = "ERROR";
+        }
+        
+        return res;
+	}
     
     public String baseDatosArchivo() {
     	String clientes = consultarClientes();
