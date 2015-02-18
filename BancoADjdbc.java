@@ -354,6 +354,7 @@ public class BancoADjdbc{
         String query2 = "";
         
         Boolean hipo = false;
+        Boolean neg = false;
         
         //Primero se hace la transferencia despues se descuenta de Origen
         query = "SELECT * FROM Cliente WHERE nocta = '" + cuentaDestino.toString() + "'";
@@ -380,8 +381,10 @@ public class BancoADjdbc{
             
 			if (clientedp.getTipo().equals("CREDITO") || clientedp.getTipo().equals("HIPOTECA"))
 				 saldoDestino -= cantidad;
-			
-			updateDestinoSQL = "UPDATE Cliente SET saldo = " + saldoDestino + " WHERE nocta = '" + cuentaDestino.toString() + "'";
+			if (saldoDestino < 0)
+				neg = true;				
+				
+			updateDestinoSQL = "UPDATE Cliente SET saldo = " + saldoDestino + " WHERE nocta = '" + cuentaDestino.toString() + "'";		
 				 
 			result = statement.executeQuery(query2);         
 			if(result.next()){
@@ -401,14 +404,18 @@ public class BancoADjdbc{
                         
             //3) Ejecutar UPDATE Statement
             
-            if (!hipo)
+            if (!hipo && !neg)
             {
             	res = "Transferencia Exit—so";
             	statement.executeUpdate(updateDestinoSQL); 
             	statement.executeUpdate(updateOrigenSQL);
             }
-            else
+            else if(hipo == true)
+            {	
             	res = "No puedes transferir de una cuenta de Credito o Hipoteca";
+            }
+            else
+            	res = "Error: Máximo a transferir a esta cuenta = "+(saldoDestino+cantidad);		
             
             //3) Cerra la base de datos banco
             statement.close();
