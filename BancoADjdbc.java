@@ -345,14 +345,19 @@ public class BancoADjdbc{
 	//Transferencia
 	public String transferencia(String cuentaOrigen, int cantidad, String cuentaDestino) {
     	ResultSet result;
-        String updateSQL = "";
-        int saldo = 0;
+        String updateOrigenSQL = "";
+        String updateDestinoSQL="";
+        int saldoDestino = 0;
+        int saldoOrigen = 0;
         String res = "";
         String query = "";
+        String query2 = "";
         
         Boolean hipo = false;
         
-        query = "SELECT * FROM Cliente WHERE nocta = '" + cuenta.toString() + "'";
+        //Primero se hace la transferencia despues se descuenta de Origen
+        query = "SELECT * FROM Cliente WHERE nocta = '" + cuentaDestino.toString() + "'";
+        query2 = "SELECT * FROM Cliente WHERE nocta = '" + cuentaOrigen.toString() + "'"; 
         
         try{
             
@@ -366,31 +371,48 @@ public class BancoADjdbc{
                 clientedp.setSaldo(result.getInt("saldo"));
                 clientedp.setTipo(result.getString("cuenta"));
                 
-                saldo = clientedp.getSaldo();
+                saldoDestino = clientedp.getSaldo();
             }
             
             if (clientedp.getTipo().equals("AHORRO") || clientedp.getTipo().equals("INVERSION"))
-            	 saldo -= cantidad;
+            	 saldoDestino += cantidad;
             
-			if (clientedp.getTipo().equals("CREDITO"))
-				 saldo += cantidad;
+			if (clientedp.getTipo().equals("CREDITO") || clientedp.getTipo().equals("HIPOTECA"))
+				 saldoDestino -= cantidad;
 			
-			if (clientedp.getTipo().equals("HIPOTECA"))
+			updateDestinoSQL = "UPDATE Cliente SET saldo = " + saldoDestino + " WHERE nocta = '" + cuentaDestino.toString() + "'";
+				 
+			result = statement.executeQuery(query2);         
+			if(result.next()){
+                clientedp.setSaldo(result.getInt("saldo"));
+                clientedp.setTipo(result.getString("cuenta"));
+                
+                saldoOrigen = clientedp.getSaldo();
+            }
+            if (clientedp.getTipo().equals("AHORRO") || clientedp.getTipo().equals("INVERSION"))
+            	 saldoOrigen -= cantidad;
+            	 
+            
+			if (clientedp.getTipo().equals("CREDITO") || clientedp.getTipo().equals("HIPOTECA"))
 				 hipo = true;
-            
-            updateSQL = "UPDATE Cliente SET saldo = " + saldo + " WHERE nocta = '" + cuenta.toString() + "'";
-            
+				 
+            updateOrigenSQL = "UPDATE Cliente SET saldo = " + saldoOrigen + " WHERE nocta = '" + cuentaOrigen.toString() + "'";
+                        
             //3) Ejecutar UPDATE Statement
-            statement.executeUpdate(updateSQL);
             
             if (!hipo)
-            	res = "Retiro Exit—so";
+            {
+            	res = "Transferencia Exit—so";
+            	statement.executeUpdate(updateDestinoSQL); 
+            	statement.executeUpdate(updateOrigenSQL);
+            }
             else
-            	res = "Para una cuenta de 'HIPOTECA' no se puede realizar un retiro";
+            	res = "No puedes transferir de una cuenta de Credito o Hipoteca";
             
             //3) Cerra la base de datos banco
             statement.close();
-            System.out.println(conexion.nativeSQL(updateSQL));
+            System.out.println(conexion.nativeSQL(updateOrigenSQL));
+            System.out.println(conexion.nativeSQL(updateDestinoSQL));
         }
         catch(SQLException sqle){
             System.out.println("Error: \n" + sqle);

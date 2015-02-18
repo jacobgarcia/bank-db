@@ -292,7 +292,7 @@ public class ClienteGUI extends JFrame implements ActionListener
 			activarBotones();
 		}
 		
-		if(e.getSource() == bTransferir)
+		if(e.getSource() == bTransferencia)
 		{
 			String cta = tfNocuenta.getText();
 			String cta2 = JOptionPane.showInputDialog("Cuenta a la que desea Transferir: ");
