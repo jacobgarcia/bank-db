@@ -370,10 +370,11 @@ public class BancoADjdbc{
             if(result.next()){
                 clientedp.setSaldo(result.getInt("saldo"));
                 clientedp.setTipo(result.getString("cuenta"));
-                
                 saldoDestino = clientedp.getSaldo();
+                res = "ok";
             }
-            
+            if(res.equals(""))
+            	return res = "No existe la cuenta destino";
             if (clientedp.getTipo().equals("AHORRO") || clientedp.getTipo().equals("INVERSION"))
             	 saldoDestino += cantidad;
             
