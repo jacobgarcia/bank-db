@@ -2,7 +2,7 @@ import java.util.*;
 
 public class ClienteDP
 {
-	private String nocta,nombre,tipo;
+	private String nocta,nombre,tipo, fecha, hora;
 	private int saldo;
 	
 	
@@ -13,6 +13,8 @@ public class ClienteDP
 		this.nombre = "";
 		this.tipo   = "";
 		this.saldo  = 0;
+		this.fecha  = "";
+		this.hora   = "";
 	}
 	
 	public ClienteDP(String datos)
@@ -23,6 +25,8 @@ public class ClienteDP
 		this.nombre = st.nextToken();
 		this.tipo   = st.nextToken();
 		this.saldo  = Integer.parseInt(st.nextToken());
+		this.fecha  = st.nextToken();
+		this.hora   = st.nextToken();
 	}
 	
 	/*** Accesors ***/
@@ -44,6 +48,14 @@ public class ClienteDP
 	public int getSaldo()
 	{
 		return this.saldo;
+	}
+	
+	public String getFecha() {
+		return this.fecha;
+	}
+	
+	public String getHora() {
+		return this.hora;
 	}
 	
 	
@@ -68,12 +80,20 @@ public class ClienteDP
 		this.saldo = n;
 	}
 	
+	public void setFecha(String str) {
+		this.fecha = str;
+	}
+	
+	public void setHora(String str) {
+		this.hora = str;
+	}
+	
 	public String toString()
 	{
-		return this.nocta+"_"+this.nombre+"_"+this.tipo+"_"+this.saldo;
+		return this.nocta+"_"+this.nombre+"_"+this.tipo+"_"+this.saldo+"_"+this.fecha+"_"+this.hora;
 	}
     
     public String toSQLString(){
-        return "'" + this.nocta + "','" + this.nombre+"','"+this.tipo+"',"+this.saldo+"";
+    	return "'" + this.nocta + "','" + this.nombre+"','"+this.tipo+"',"+this.saldo+",'" + this.fecha + "','" + this.hora + "'";
     }
 }

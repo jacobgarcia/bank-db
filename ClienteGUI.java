@@ -2,18 +2,25 @@ import javax.swing.*;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.StringTokenizer;
 
 @SuppressWarnings("serial")
 public class ClienteGUI extends JFrame implements ActionListener
 {
-	private JTextField tfNocuenta, tfNombre, tfTipo, tfSaldo;
-	private JButton bCapturar, bConsultar, bConsultarTipo, bConsultarNocta, bBorrarCliente, bCancelar, bRetiro, bDeposito, bTransferencia, bArchivoTexto, bDatosArchivo, bArchivoABase, bSalir;
+	private JTextField tfNocuenta, tfNombre, tfTipo, tfSaldo, tfDate;
+	private JButton bCapturar, bConsultar, bConsultarTipo, bConsultarNocta, bBorrarCliente, bCancelar, bRetiro, bDeposito, bTransferencia, bArchivoTexto, bDatosArchivo, bArchivoABase, bSalir, bVerRetiros, bVerDepositos;
 	private JTextArea taDatos;
 	private JPanel panel1, panel2;
 	
 	private JComboBox combo;
 	private String opciones[] = {"INVERSION", "AHORRO","CREDITO","HIPOTECA"};
+	
+	private Date date;
+	private SimpleDateFormat formatoFecha, formatoHora;
+	
+	private String fecha, hora;
 	
 	//private ClienteAD cliente = new ClienteAD();
 	private BancoADjdbc banco = new BancoADjdbc();
@@ -27,6 +34,7 @@ public class ClienteGUI extends JFrame implements ActionListener
 		tfNombre   = new JTextField();
 		tfTipo     = new JTextField();
 		tfSaldo    = new JTextField();
+		tfDate	   = new JTextField();
 		
 		bCapturar  = new JButton("Capturar Cliente");
 		bConsultar = new JButton("Consultar Clientes");
@@ -40,6 +48,8 @@ public class ClienteGUI extends JFrame implements ActionListener
 		bDatosArchivo = new JButton("Pasar datos al archivo de texto");
 		bArchivoTexto = new JButton("Desplegar archivo texto");
 		bArchivoABase = new JButton("Pasar datos del Archivo a la BD");
+		bVerDepositos = new JButton("Consultar Dep—sitos");
+		bVerRetiros = new JButton("Consultar Retiros");
 		bSalir     = new JButton("Salir"); 
 		
 		// Adicionar deteccion de eventos a los botones
@@ -55,6 +65,8 @@ public class ClienteGUI extends JFrame implements ActionListener
 		bDatosArchivo.addActionListener(this);
 		bArchivoTexto.addActionListener(this);
 		bArchivoABase.addActionListener(this);
+		bVerDepositos.addActionListener(this);
+		bVerRetiros.addActionListener(this);
 		bSalir.addActionListener(this);
 		
 		combo = new JComboBox(opciones);
@@ -65,7 +77,7 @@ public class ClienteGUI extends JFrame implements ActionListener
 		panel2     = new JPanel();
 		
 		// 2. Adicionar los objetos al panel1
-		panel1.setLayout(new GridLayout(12,2));
+		panel1.setLayout(new GridLayout(14,2));
 		panel2.setLayout(new FlowLayout());
 		
 		panel1.add(new JLabel("NO. DE CUENTA"));
@@ -84,6 +96,10 @@ public class ClienteGUI extends JFrame implements ActionListener
 		panel1.add(tfTipo);
 		tfTipo.setEditable(false);
 		
+		panel1.add(new JLabel("FECHA/HORA"));
+		panel1.add(tfDate);
+		tfDate.setEditable(false);
+		
 		panel1.add(bCapturar);
 		panel1.add(bConsultar);
 		panel1.add(bConsultarTipo);
@@ -96,13 +112,15 @@ public class ClienteGUI extends JFrame implements ActionListener
 		panel1.add(bArchivoTexto);
 		panel1.add(bDatosArchivo);
 		panel1.add(bArchivoABase);
+		panel1.add(bVerDepositos);
+		panel1.add(bVerRetiros);
 		panel1.add(bSalir);
 		panel2.add(panel1);
 		panel2.add(new JScrollPane(taDatos));
 		
 		// 3. Adicionar panel2 al JFrame
 		add(panel2);
-		setSize(500,550);
+		setSize(500,650);
 		setVisible(true);
 		
 		//Deshabilitar botones
@@ -110,10 +128,7 @@ public class ClienteGUI extends JFrame implements ActionListener
 		bCancelar.setEnabled(false);
 		bDeposito.setEnabled(false);
 		bRetiro.setEnabled(false);
-		bTransferencia.setEnabled(false);
-
-		
-		
+		bTransferencia.setEnabled(false);	
 	}
 	
 	public void desplegar(String datos)
@@ -142,7 +157,18 @@ public class ClienteGUI extends JFrame implements ActionListener
 			try
 			{
 				int s = Integer.parseInt(saldo);
-				datos = cuenta+"_"+nombre+"_"+tipo+"_"+s;
+				
+				date = new Date();
+				/* MySQL Date format */
+			    formatoFecha = new SimpleDateFormat("yyyy-MM-dd");
+				formatoHora  = new SimpleDateFormat("hh:mm:ss");
+				
+				/* Adicionar la fecha al textfield */
+				fecha = formatoFecha.format(date);
+				hora  = formatoHora.format(date);
+				tfDate.setText(fecha + " " + hora);
+				
+				datos = cuenta+"_"+nombre+"_"+tipo+"_"+s+"_"+fecha+"_"+hora;
 			}
 			catch(NumberFormatException nfe)
 			{
@@ -175,6 +201,15 @@ public class ClienteGUI extends JFrame implements ActionListener
 		bRetiro.setEnabled(false);
 		bDeposito.setEnabled(false);
 		bTransferencia.setEnabled(false);
+	}
+	
+	public void habilitarCampos (boolean value)
+	{
+		tfNocuenta.setEnabled(value);
+		tfNombre.setEnabled(value);
+		tfSaldo.setEnabled(value);
+		tfTipo.setEnabled(value);
+		tfTipo.setEnabled(value);
 	}
 	
 	public void actionPerformed(ActionEvent e)
@@ -255,6 +290,7 @@ public class ClienteGUI extends JFrame implements ActionListener
 				taDatos.setText(datos);
 	            
 	            inactivarBotones();
+	            habilitarCampos(false);
             }
 		}
 		
@@ -263,10 +299,13 @@ public class ClienteGUI extends JFrame implements ActionListener
 			String datos = banco.borrarCliente(cta);
 			taDatos.setText(datos);
 			activarBotones();
+			habilitarCampos(true);
 		}
 		
-		if(e.getSource() == bCancelar)
+		if(e.getSource() == bCancelar){
 			activarBotones();
+			habilitarCampos(true);
+		}
 
 		
 		if(e.getSource() == bSalir)
@@ -277,9 +316,21 @@ public class ClienteGUI extends JFrame implements ActionListener
 			String ctd = JOptionPane.showInputDialog("Cantidad a Depositar: ");
 			String respuesta = "";
 			int cantidad = Integer.parseInt(ctd);
-			respuesta = banco.deposito(cta, cantidad);
+			
+			date = new Date();
+			/* MySQL Date format */
+		    formatoFecha = new SimpleDateFormat("yyyy-MM-dd");
+			formatoHora  = new SimpleDateFormat("hh:mm:ss");
+			
+			/* Adicionar la fecha al textfield */
+			fecha = formatoFecha.format(date);
+			hora  = formatoHora.format(date);
+			tfDate.setText(fecha + " " + hora);
+			
+			respuesta = banco.deposito(cta, cantidad, fecha, hora);
 			taDatos.setText(respuesta);
 			activarBotones();
+			habilitarCampos(true);
 		}
 		
 		if (e.getSource() == bRetiro) {
@@ -287,9 +338,21 @@ public class ClienteGUI extends JFrame implements ActionListener
 			String ctd = JOptionPane.showInputDialog("Cantidad a Retirar: ");
 			String respuesta = "";
 			int cantidad = Integer.parseInt(ctd);
-			respuesta = banco.retiro(cta, cantidad);
+			
+			date = new Date();
+			/* MySQL Date format */
+		    formatoFecha = new SimpleDateFormat("yyyy-MM-dd");
+			formatoHora  = new SimpleDateFormat("hh:mm:ss");
+			
+			/* Adicionar la fecha al textfield */
+			fecha = formatoFecha.format(date);
+			hora  = formatoHora.format(date);
+			tfDate.setText(fecha + " " + hora);
+			
+			respuesta = banco.retiro(cta, cantidad, fecha, hora);
 			taDatos.setText(respuesta);
 			activarBotones();
+			habilitarCampos(true);
 		}
 		
 		if(e.getSource() == bTransferencia)
@@ -302,6 +365,7 @@ public class ClienteGUI extends JFrame implements ActionListener
 			respuesta = banco.transferencia(cta, cantidad, cta2);
 			taDatos.setText(respuesta);
 			activarBotones();
+			habilitarCampos(true);
 		}
 		
 		if (e.getSource() == bDatosArchivo) {
@@ -317,6 +381,18 @@ public class ClienteGUI extends JFrame implements ActionListener
 		if (e.getSource() == bArchivoABase) {
 			String respuesta = banco.archivoABaseDatos();
 			taDatos.setText(respuesta);
+		}
+		
+		if(e.getSource() == bVerDepositos)
+		{
+			String datos = banco.consultar("Deposito");
+			taDatos.setText(datos);
+		}
+		
+		if(e.getSource() == bVerRetiros)
+		{
+			String datos = banco.consultar("Retiro");
+			taDatos.setText(datos);
 		}
 	}
 	

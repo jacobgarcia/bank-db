@@ -110,6 +110,6 @@ public class TransaccionDP
 	}
     
     public String toSQLString(){
-        return "'" + this.nocta + "','" + this.tipo+"','" + this.saldoAnterior + "'," + this.cantidad + "'," + this.saldoActual + "'," + this.fecha + "'," + this.hora;
+        return "'" + this.nocta + "','" + this.tipo+"'," + this.saldoAnterior + "," + this.cantidad + "," + this.saldoActual + ",'" + this.fecha + "','" + this.hora + "'";
     }
 }

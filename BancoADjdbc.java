@@ -29,13 +29,14 @@ public class BancoADjdbc{
     private Connection conexion;
     private Statement statement;
     private ClienteDP clientedp;
+    private TransaccionDP transaccionDP;
     private PrintWriter printWriterArchivoSalida;
     private BufferedReader bufferedReaderArchivoEntrada;
     
 	public BancoADjdbc(){
 		try {
 			Class.forName("com.mysql.jdbc.Driver").newInstance();
-			conexion = DriverManager.getConnection("jdbc:mysql://localhost/banco","root","admin");
+			conexion = DriverManager.getConnection("jdbc:mysql://localhost/banco?user=root");
             
 			System.out.println("Conexi—n exit—sa a la Base de Datos Banco, Driver JDBC Tipo 4");
 		}
@@ -114,6 +115,8 @@ public class BancoADjdbc{
                 clientedp.setNombre(result.getString(2));
                 clientedp.setTipo(result.getString(3));
                 clientedp.setSaldo(result.getInt(4));
+                clientedp.setFecha(result.getDate(5).toString());
+                clientedp.setHora(result.getString(6));
                 
                 respuesta = respuesta + clientedp.toString() + "\n";
             }
@@ -151,6 +154,8 @@ public class BancoADjdbc{
                 clientedp.setNombre(result.getString(2));
                 clientedp.setTipo(result.getString(3));
                 clientedp.setSaldo(result.getInt(4));
+                clientedp.setFecha(result.getDate(5).toString());
+                clientedp.setHora(result.getString(6));
                 
                 respuesta = respuesta + clientedp.toString() + "\n";
             }
@@ -191,6 +196,8 @@ public class BancoADjdbc{
                 clientedp.setNombre(result.getString(2));
                 clientedp.setTipo(result.getString(3));
                 clientedp.setSaldo(result.getInt(4));
+                clientedp.setFecha(result.getDate(5).toString());
+                clientedp.setHora(result.getString(6));
                 
                 respuesta = respuesta + clientedp.toString() + "\n";
             }
@@ -237,15 +244,16 @@ public class BancoADjdbc{
         return respuesta;
     }
     
-    public String deposito(String cuenta, int cantidad) {
+    public String deposito(String cuenta, int cantidad, String fecha, String hora) {
     	ResultSet result;
-        String updateSQL = "";
+        String updateSQL = "", insertTransaccion = "", datos = "";
         int respuesta = 0;
         String res = "";
         String query = "";
 
         int saldo = 0;
         query = "SELECT saldo FROM Cliente WHERE nocta = '" + cuenta.toString() + "'";
+        
         
         try{
             
@@ -268,11 +276,22 @@ public class BancoADjdbc{
             
             updateSQL = "UPDATE Cliente SET saldo = " + saldo + " WHERE nocta = '" + cuenta.toString() + "'";
             
+            
             //3) Ejecutar UPDATE Statement
             statement.executeUpdate(updateSQL);
             
             res = "Dep—sito Exit—so";
-            //3) Cerra la base de datos banco
+            
+            datos = clientedp.getNocta() + "_" + clientedp.getTipo() + "_" + clientedp.getSaldo() + "_" + cantidad + "_" + saldo + "_" + fecha + "_" + hora;
+            transaccionDP = new TransaccionDP(datos);
+            
+            //4) Crear sentencia INSERT
+            insertTransaccion = "INSERT INTO Deposito VALUES(" + transaccionDP.toSQLString() + ");";
+            
+            //4) Capturar datos en la tabla correspondiente
+            statement.executeUpdate(insertTransaccion);
+            
+            //5) Cierra la base de datos banco
             statement.close();
             System.out.println(conexion.nativeSQL(updateSQL));
         }
@@ -285,12 +304,12 @@ public class BancoADjdbc{
 
 	}
     
-    public String retiro(String cuenta, int cantidad) {
+    public String retiro(String cuenta, int cantidad, String fecha, String hora) {
     	ResultSet result;
-        String updateSQL = "";
+        String updateSQL = "", datos = "";
         int saldo = 0;
         String res = "";
-        String query = "";
+        String query = "", insertTransaccion = "";
         
         Boolean hipo = false;
         
@@ -330,7 +349,16 @@ public class BancoADjdbc{
             else
             	res = "Para una cuenta de 'HIPOTECA' no se puede realizar un retiro";
             
-            //3) Cerra la base de datos banco
+            datos = clientedp.getNocta() + "_" + clientedp.getTipo() + "_" + clientedp.getSaldo() + "_" + cantidad + "_" + saldo + "_" + fecha + "_" + hora;
+            transaccionDP = new TransaccionDP(datos);
+            
+            //4) Crear sentencia INSERT
+            insertTransaccion = "INSERT INTO Retiro VALUES(" + transaccionDP.toSQLString() + ");";
+            
+            //4) Capturar datos en la tabla correspondiente
+            statement.executeUpdate(insertTransaccion);
+            
+            //5) Cierra la base de datos banco
             statement.close();
             System.out.println(conexion.nativeSQL(updateSQL));
         }
@@ -517,5 +545,45 @@ public class BancoADjdbc{
 			datos = "El archivo de texto no contiene informaci—n";
 		}
 		return datos;
+	}
+    
+    public String consultar(String tipoConsulta) {
+	    ResultSet result = null;
+	    String query = "";
+	    String respuesta = "";
+	    
+	    query = "SELECT * FROM " + tipoConsulta;
+	    
+	    transaccionDP = new TransaccionDP();
+	    try{
+	        
+	        //1) Abrir la base de datos Banco
+	        statement = conexion.createStatement();
+	    
+	        //2) Procesar datos de la tabla resultante
+	        result = statement.executeQuery(query);
+	        
+	        while(result.next()){
+	            transaccionDP.setNocta(result.getString(1));
+	            transaccionDP.setTipo(result.getString(2));
+	            transaccionDP.setSaldoAnterior(result.getInt(3));
+	            transaccionDP.setCantidad(result.getInt(4));
+	            transaccionDP.setSaldoActual(result.getInt(5));
+	            transaccionDP.setFecha(result.getDate(6).toString());
+	            transaccionDP.setHora(result.getString(7));
+	            
+	            respuesta = respuesta + transaccionDP.toString() + "\n";
+	        }
+	        
+	        //3) Cerra la base de datos banco
+	        statement.close();
+	        System.out.println(conexion.nativeSQL(query));
+	    }
+	    catch(SQLException sqle){
+	        System.out.println("Error: \n" + sqle);
+	        respuesta = "No se pudo realizar la consulta";
+	    }
+	    
+	    return respuesta;
 	}
 }
