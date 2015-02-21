@@ -10,21 +10,6 @@ import java.sql.Statement;
 import java.sql.ResultSet;
 
 public class BancoADjdbc{
-    // Microsoft Access Database
-	/*public BancoADjdbc(){
-		try {
-			Class.forName("sun.jdbc.odbc.JdbcOdbcDriver");
-			DriverManager.getConnection("jdbc:odbc:baseBanco");
-			System.out.println("Conexiâˆšâ‰¥n exitâˆšâ‰¥sa a la Base de Datos Access, Driver JDBC Tipo 1... ");
-		}
-		catch(ClassNotFoundException nfe){
-			System.out.println("Error: " + nfe);
-		}
-
-		catch(SQLException sqle){
-			System.out.println("Error de conexiâˆšâ‰¥n a la Base de Datos Access: \n" + sqle);
-		}
-	}*/
     
     private Connection conexion;
     private Statement statement;
@@ -41,16 +26,16 @@ public class BancoADjdbc{
 			System.out.println("Conexi—n exit—sa a la Base de Datos Banco, Driver JDBC Tipo 4");
 		}
 		catch(ClassNotFoundException cnfe){
-			System.out.println("Error: " + cnfe);
+			System.out.println("Error con el Driver JDBC: " + cnfe);
 		}
 		catch(InstantiationException ie){
-			System.out.println("Error: " + ie);
+			System.out.println("Error. La clase no se puede instanciar: " + ie);
 		}
 		catch(IllegalAccessException iae){
-			System.out.println("Error: " + iae);
+			System.out.println("Error. Las credenciales para el acceso a la base de datos no son v‡lidas: " + iae);
 		}
 		catch(SQLException sqle){
-			System.out.println("Error: \n" + sqle);
+			System.out.println("Error SQL: \n" + sqle);
 		
 		}
 	}
@@ -58,16 +43,6 @@ public class BancoADjdbc{
     public String capturar(String datos){
         String insertCliente = "";
         String respuesta = "";
-        
-        /* Primer Forma */
-        /*StringTokenizer st = new StringTokenizer(datos,"_");
-        String nocuenta = st.nextToken();
-        String nombre = st.nextToken();
-        String tipo = st.nextToken();
-        String saldo = st.nextToken();*/
-        
-        /* Crear String con instrucci—n SQL */
-        //insertCliente = "INSERT INTO Cliente VALUES(" + clientedp.toSQLString() + ");";
         
         /* Segunda Forma */
         clientedp = new ClienteDP(datos);
@@ -90,6 +65,7 @@ public class BancoADjdbc{
         }
         catch(SQLException sqle){
             	System.out.println("Error: \n" + sqle);
+            	respuesta = "CLAVE_DUPLICADA";
         }
         return respuesta;
     }
@@ -127,7 +103,7 @@ public class BancoADjdbc{
         }
         catch(SQLException sqle){
             System.out.println("Error: \n" + sqle);
-            respuesta = "No se pudo realizar la consulta";
+            respuesta = "ERROR";
         }
         
         return respuesta;
@@ -161,7 +137,7 @@ public class BancoADjdbc{
             }
             
             if(respuesta == "")
-                respuesta = "No se encontr— ninguna cuenta de tipo: " + tipo;
+                respuesta = "NO_TIPO";
             
             //3) Cerra la base de datos banco
             statement.close();
@@ -169,7 +145,7 @@ public class BancoADjdbc{
         }
         catch(SQLException sqle){
             System.out.println("Error: \n" + sqle);
-            respuesta = "No se pudo realizar la consulta";
+            respuesta = "ERROR";
         }
         
         return respuesta;
@@ -179,7 +155,10 @@ public class BancoADjdbc{
         ResultSet result = null;
         String query = "";
         String respuesta = "";
-        
+
+    	if(cuenta.equals(""))
+    		return respuesta = "CLAVE_VACIA";
+    	
         query = "SELECT * FROM Cliente WHERE nocta = '" + cuenta.toString() + "'";
         
         clientedp = new ClienteDP();
@@ -203,7 +182,7 @@ public class BancoADjdbc{
             }
             
             if(respuesta.equals(""))
-                respuesta = "NO_DATOS";
+                respuesta = "NO_CLAVE";
             
             //3) Cerra la base de datos banco
             statement.close();
@@ -388,6 +367,7 @@ public class BancoADjdbc{
         query = "SELECT * FROM Cliente WHERE nocta = '" + cuentaDestino.toString() + "'";
         query2 = "SELECT * FROM Cliente WHERE nocta = '" + cuentaOrigen.toString() + "'"; 
         
+        clientedp = new ClienteDP();
         try{
             
             //1) Abrir la base de datos Banco
@@ -413,8 +393,9 @@ public class BancoADjdbc{
 				neg = true;				
 				
 			updateDestinoSQL = "UPDATE Cliente SET saldo = " + saldoDestino + " WHERE nocta = '" + cuentaDestino.toString() + "'";		
-				 
-			result = statement.executeQuery(query2);         
+		
+			result = statement.executeQuery(query2);  
+			clientedp = new ClienteDP();
 			if(result.next()){
                 clientedp.setSaldo(result.getInt("saldo"));
                 clientedp.setTipo(result.getString("cuenta"));
@@ -443,7 +424,7 @@ public class BancoADjdbc{
             	res = "No puedes transferir de una cuenta de Credito o Hipoteca";
             }
             else
-            	res = "Error: Máximo a transferir a esta cuenta = "+(saldoDestino+cantidad);		
+            	res = "Error: M‡ximo a transferir a esta cuenta = "+(saldoDestino+cantidad);		
             
             //3) Cerra la base de datos banco
             statement.close();
